@@ -1,4 +1,4 @@
-package com.bank.credit.test.data;
+package com.bank.credit.sample.data;
 
 import com.bank.credit.entity.Customer;
 import com.bank.credit.repository.CustomerRepository;
@@ -17,7 +17,7 @@ public class DataLoader implements CommandLineRunner {
     }
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args) {
         Customer customer1 = new Customer();
         customer1.setName("John");
         customer1.setSurname("Doe");
