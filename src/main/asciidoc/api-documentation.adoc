@@ -1,0 +1,237 @@
+
+= API Documentation
+
+== Customer Operations API Endpoints
+
+API operations related to customer information and their associated loans.
+
+=== Endpoints:
+
+==== 1. GET /api/v1/customers/{customerId}/loans
+* Description: Returns a list of loans associated with the specified customer ID. Additionally, it supports filtering by loan payment status (`is_paid`) and pagination.
+* Method: `GET`
+* Path Parameters:
+** `customerId`: The ID of the customer (Long)
+* Request Parameters:
+** `is_paid`: Filters loans by payment status (Boolean, optional)
+** `page`: The page number for pagination (int, default: 0)
+** `page_size`: The number of items per page (int, default: 10, max: 50)
+* Response:
+** `200 OK`: Returns a paginated list of loans for the specified customer.
+* Response Body:
+** `id`: ID of the loan
+** `loanAmount`: The loan amount without interest
+** `loanAmountWithInterest`: The loan amount with interest
+** `interestRate`: Interest rate applied to the loan
+** `numberOfInstallments`: Number of installments of the loan
+** `createDate`: Creation time of the loan
+** `installmentAmountWithInterest`: The amount of an installment of the loan with interest
+** `paid`: Information on whether the loan has been paid or not
+** `pageable`: Pagination information
+
+* Example Request:
+----
+GET /api/v1/customers/123/loans?is_paid=true&page=1&page_size=10
+----
+
+* Example Response:
+----
+{
+  "content": [
+    {
+      "id": 10,
+      "loanAmount": 873.11,
+      "loanAmountWithInterest": 1309.67,
+      "interestRate": 0.5,
+      "numberOfInstallments": 6,
+      "createDate": "2024-11-26T22:27:48.671059",
+      "installmentAmountWithInterest": 218.28,
+      "paid": false
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 10,
+    "sort": {
+      "sorted": true,
+      "unsorted": false,
+      "empty": false
+    },
+    "offset": 0,
+    "paged": true,
+    "unpaged": false
+  },
+  "totalPages": 1,
+  "totalElements": 1,
+  "last": true,
+  "numberOfElements": 1,
+  "sort": {
+    "sorted": true,
+    "unsorted": false,
+    "empty": false
+  },
+  "first": true,
+  "number": 0,
+  "size": 10,
+  "empty": false
+}
+----
+* Error codes:
+----
+> 404 - Customer not found with id 23
+----
+
+== Loan Operations API Endpoints
+
+API operations related to loans, including loan creation, retrieving loan installments, and processing loan payments.
+
+=== Endpoints:
+
+==== 1. POST /api/v1/loans
+* Description: Creates a new loan. A `CreateLoanRequest` object is required in the request body.
+* Method: `POST`
+* Request Parameters:
+** `request`: A `CreateLoanRequest` object containing the loan creation details (JSON format)
+* Request Body:
+** `customerId`: ID of the customer applying for credit
+** `amount`: Amount of the loan applied for
+** `interestRate`: Interest rate of the loan applied for
+** `numberOfInstallments`: Number of installments of the loan applied for
+* Response:
+** `200 OK`: Loan successfully created.
+
+* Example Request:
+----
+  POST /api/v1/loans
+{
+  "customerId": 3,
+  "amount": 873.11,
+  "interestRate": 0.5,
+  "numberOfInstallments": 6
+}
+----
+
+* Example Response:
+----
+  "Loan has been created successfully"
+----
+* Error codes:
+----
+> 400 - Customer credit limit exceeded
+> 404 - Customer not found with id 23
+----
+
+==== 2. GET /api/v1/loans/{loanId}/loan-installments
+* Description: Returns a list of loan installments for the specified loan ID. Pagination and filtering by payment status (`is_paid`) are supported.
+* Method: `GET`
+* Path Parameters:
+** `loanId`: The ID of the loan (Long)
+* Request Parameters:
+** `is_paid`: Filters installments by payment status (Boolean, optional)
+** `page`: The page number for pagination (int, default: 0)
+** `page_size`: The number of items per page (int, default: 10)
+* Response:
+** `200 OK`: Returns a paginated list of loan installments for the specified loan.
+* Response Body:
+** `id`: ID of the installment
+** `amount`: The amount of the installment
+** `paidAmount`: The amount of installment paid. If not paid yet, it is null
+** `dueDate`: The last payment date of the installment
+** `paymentDate`: The payment date of the installment. If not paid yet, it is null
+** `pageable`: Pagination information
+
+* Example Request:
+----
+  GET /api/v1/loans/1/loan-installments?is_paid=true&page=0&page_size=2
+----
+
+* Example Response:
+----
+{
+  "content": [
+    {
+      "id": 51,
+      "amount": 218.28,
+      "paidAmount": 218.28,
+      "dueDate": "2024-12-01",
+      "paymentDate": "2024-11-26",
+      "paid": true
+    },
+    {
+      "id": 52,
+      "amount": 218.28,
+      "paidAmount": 218.28,
+      "dueDate": "2025-01-01",
+      "paymentDate": "2024-11-26",
+      "paid": true
+    }
+  ],
+  "pageable": {
+    "pageNumber": 0,
+    "pageSize": 2,
+    "sort": {
+      "sorted": true,
+      "unsorted": false,
+      "empty": false
+    },
+    "offset": 0,
+    "paged": true,
+    "unpaged": false
+  },
+  "totalPages": 2,
+  "totalElements": 4,
+  "last": false,
+  "numberOfElements": 2,
+  "sort": {
+    "sorted": true,
+    "unsorted": false,
+    "empty": false
+  },
+  "first": true,
+  "number": 0,
+  "size": 2,
+  "empty": false
+}
+----
+* Error codes:
+----
+> 404 - Loan not found with id 643
+----
+
+==== 3. POST /api/v1/loans/{id}/pay-loan
+* Description: Processes a loan payment for the specified loan ID. A `PayLoanRequest` object is required in the request body.
+* Method: `POST`
+* Path Parameters:
+** `id`: The ID of the loan to be paid (Long)
+* Request Body:
+** `amount`: The amount to be paid
+* Response:
+** `200 OK`: Loan payment successfully processed.
+* Response Body:
+** `numberOfPaidInstallments`: Information on how many installments were paid with the payment made
+** `paidAmount`: Amount of payment made
+** `loanCompleted`: Information on whether loan payments have been completed or not
+
+* Example Request:
+----
+  POST /api/v1/loans/1/pay-loan
+{
+  "amount": 700.0
+}
+----
+
+* Example Response:
+----
+{
+  "numberOfPaidInstallments": 2,
+  "paidAmount": 436.56,
+  "loanCompleted": false
+}
+----
+* Error codes:
+----
+> 400 - Loan has already been paid
+> 400 - Payment amount is not enough to pay an installment
+> 400 - There are no unpaid installments in the next 3 calendar months for the loan with ID: 242
+> 404 - Loan not found with ID: 242
+----
